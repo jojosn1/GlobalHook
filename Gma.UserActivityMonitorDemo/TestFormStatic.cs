@@ -266,22 +266,25 @@ namespace Gma.UserActivityMonitorDemo
             getouLoop = false;
             guiFormInst.Invoke(new invokeDelegate(log2TextBox), "start simulate...\n");
 
-            for (int i = 0; i < clickInfoList.Count && !getouLoop; i++)
+            for (int n = 0; n < simClickNum; n++)
             {
-                ClickInfo ckInfo = clickInfoList[i];
-                Thread.Sleep(ckInfo.sleepMiliSecs);
-                MouseOperations.SetCursorPosition(ckInfo.x, ckInfo.y);
-                MouseOperations.MouseEvent(MouseOperations.MouseEventFlags.LeftDown);
-                Thread.Sleep(200);
-                MouseOperations.MouseEvent(MouseOperations.MouseEventFlags.LeftUp);
-                if (ckInfo.isDoubleClick)
+                for (int i = 0; i < clickInfoList.Count && !getouLoop; i++)
                 {
+                    ClickInfo ckInfo = clickInfoList[i];
+                    Thread.Sleep(ckInfo.sleepMiliSecs);
+                    MouseOperations.SetCursorPosition(ckInfo.x, ckInfo.y);
                     MouseOperations.MouseEvent(MouseOperations.MouseEventFlags.LeftDown);
                     Thread.Sleep(200);
                     MouseOperations.MouseEvent(MouseOperations.MouseEventFlags.LeftUp);
-                }
+                    if (ckInfo.isDoubleClick)
+                    {
+                        MouseOperations.MouseEvent(MouseOperations.MouseEventFlags.LeftDown);
+                        Thread.Sleep(200);
+                        MouseOperations.MouseEvent(MouseOperations.MouseEventFlags.LeftUp);
+                    }
 
-                guiFormInst.Invoke(new invokeDelegate(log2TextBox), string.Format("step {0}\n", i));
+                    guiFormInst.Invoke(new invokeDelegate(log2TextBox), string.Format("step {0}\n", i));
+                }
             }
 
             guiFormInst.Invoke(new invokeDelegate(log2TextBox), "simulate ended\n");
@@ -315,7 +318,12 @@ namespace Gma.UserActivityMonitorDemo
 
         private void btnSim_Click(object sender, EventArgs e)
         {
-            //simClickNum = 
+            if (clickInfoList.Count > 0)
+            {
+                clickInfoList.RemoveAt(clickInfoList.Count - 1);
+            }
+
+            simClickNum = int.Parse(tbSimNum.Text);
             Thread simClickThread = new Thread(new ParameterizedThreadStart(startSimLoop));
             simClickThread.Start(this);
         }
