@@ -139,10 +139,16 @@ namespace Gma.UserActivityMonitorDemo
         {
             //textBoxLog.AppendText(string.Format("KeyDown - {0}\n", e.KeyCode));
             //textBoxLog.ScrollToCaret();
-            if (e.KeyCode == Keys.F5)
+            switch (e.KeyCode)
             {
-                getouLoop = true;
-                textBoxLog.AppendText(string.Format("F5 is pressed\n"));
+                case Keys.F5:
+                    getouLoop = true;
+                    textBoxLog.AppendText(string.Format("F5 is pressed\n"));
+                    break;
+
+                case Keys.D:
+                    simMouseClick();
+                    break;
             }
         }
 
@@ -184,7 +190,7 @@ namespace Gma.UserActivityMonitorDemo
             if (isRecordingClick)
             {
                 // record 
-                int sleepSecs = (int)TimeSpan.FromTicks(DateTime.Now.Ticks - lastClickTicks).TotalMilliseconds + 1000;
+                int sleepSecs = (int)TimeSpan.FromTicks(DateTime.Now.Ticks - lastClickTicks).TotalMilliseconds;
                 clickInfoList.Add(new ClickInfo(e.X, e.Y, sleepSecs, false));
                 lastClickTicks = DateTime.Now.Ticks;
             }
@@ -210,7 +216,7 @@ namespace Gma.UserActivityMonitorDemo
                 } 
 
                 // record 
-                int sleepSecs = (int)TimeSpan.FromTicks(DateTime.Now.Ticks - lastClickTicks).TotalMilliseconds + 1000;
+                int sleepSecs = (int)TimeSpan.FromTicks(DateTime.Now.Ticks - lastClickTicks).TotalMilliseconds;
                 clickInfoList.Add(new ClickInfo(e.X, e.Y, sleepSecs, true));
                 lastClickTicks = DateTime.Now.Ticks;
             }
@@ -259,6 +265,13 @@ namespace Gma.UserActivityMonitorDemo
             textBoxLog.AppendText(content);
         }
 
+        private void simMouseClick()
+        {
+            MouseOperations.MouseEvent(MouseOperations.MouseEventFlags.LeftDown);
+            Thread.Sleep(200);
+            MouseOperations.MouseEvent(MouseOperations.MouseEventFlags.LeftUp);
+        }
+
         private void startSimLoop(Object outter)
         {
             TestFormStatic guiFormInst = (TestFormStatic)outter;
@@ -273,14 +286,10 @@ namespace Gma.UserActivityMonitorDemo
                     ClickInfo ckInfo = clickInfoList[i];
                     Thread.Sleep(ckInfo.sleepMiliSecs);
                     MouseOperations.SetCursorPosition(ckInfo.x, ckInfo.y);
-                    MouseOperations.MouseEvent(MouseOperations.MouseEventFlags.LeftDown);
-                    Thread.Sleep(200);
-                    MouseOperations.MouseEvent(MouseOperations.MouseEventFlags.LeftUp);
+                    simMouseClick();
                     if (ckInfo.isDoubleClick)
                     {
-                        MouseOperations.MouseEvent(MouseOperations.MouseEventFlags.LeftDown);
-                        Thread.Sleep(200);
-                        MouseOperations.MouseEvent(MouseOperations.MouseEventFlags.LeftUp);
+                        simMouseClick();
                     }
 
                     guiFormInst.Invoke(new invokeDelegate(log2TextBox), string.Format("step {0}\n", i));
@@ -297,6 +306,11 @@ namespace Gma.UserActivityMonitorDemo
             {
                 isRecordingClick = false;
                 btnRecord.Text = "StartRecord";
+
+                if (clickInfoList.Count > 0)
+                {
+                    clickInfoList.RemoveAt(clickInfoList.Count - 1);
+                }
 
                 // show all click records
                 for (int i = 0; i < clickInfoList.Count; i++)
@@ -318,11 +332,6 @@ namespace Gma.UserActivityMonitorDemo
 
         private void btnSim_Click(object sender, EventArgs e)
         {
-            if (clickInfoList.Count > 0)
-            {
-                clickInfoList.RemoveAt(clickInfoList.Count - 1);
-            }
-
             simClickNum = int.Parse(tbSimNum.Text);
             Thread simClickThread = new Thread(new ParameterizedThreadStart(startSimLoop));
             simClickThread.Start(this);
